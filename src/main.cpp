@@ -1,6 +1,4 @@
 #include <array>
-#include <functional>
-#include <iostream>
 #include <random>
 
 #include <docopt/docopt.h>
@@ -140,8 +138,8 @@ void consequence_game()
   static constexpr int random_seed = 42;
 
   std::mt19937 gen32{ random_seed };// NOLINT fixed seed
-  std::uniform_int_distribution<std::size_t> x(static_cast<std::size_t>(0), gb.width - 1);
-  std::uniform_int_distribution<std::size_t> y(static_cast<std::size_t>(0), gb.height - 1);
+  std::uniform_int_distribution x(static_cast<std::size_t>(0), gb.width - static_cast<std::size_t>(1));
+  std::uniform_int_distribution y(static_cast<std::size_t>(0), gb.height - static_cast<std::size_t>(1));
 
   for (int i = 0; i < randomization_iterations; ++i) { gb.press(x(gen32), y(gen32)); }
   gb.move_count = 0;
@@ -212,8 +210,8 @@ void game_iteration_canvas()
 {
   // this should probably have a `bitmap` helper function that does what you expect
   // similar to the other parts of FTXUI
-  auto bm = std::make_shared<Bitmap>(50, 50);// NOLINT magic numbers
-  auto small_bm = std::make_shared<Bitmap>(6, 6);// NOLINT magic numbers
+  const auto bm = std::make_shared<Bitmap>(50, 50);// NOLINT magic numbers
+  const auto small_bm = std::make_shared<Bitmap>(6, 6);// NOLINT magic numbers
 
   double fps = 0;
 
@@ -224,11 +222,10 @@ void game_iteration_canvas()
   auto game_iteration = [&](const std::chrono::steady_clock::duration elapsed_time) {
     // in here we simulate however much game time has elapsed. Update animations,
     // run character AI, whatever, update stats, etc
-
+    
+    using namespace std::chrono_literals;
     // this isn't actually timing based for now, it's just updating the display however fast it can
-    fps = 1.0
-          / (static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(elapsed_time).count())
-             / 1'000'000.0);// NOLINT magic numbers
+    fps = 1.0s / elapsed_time;
 
     for (std::size_t row = 0; row < max_row; ++row) {
       for (std::size_t col = 0; col < bm->width(); ++col) { ++(bm->at(col, row).R); }
@@ -242,18 +239,14 @@ void game_iteration_canvas()
     auto &small_bm_pixel =
       small_bm->data().at(static_cast<std::size_t>(elapsed_time.count()) % small_bm->data().size());
 
-    switch (elapsed_time.count() % 3) {
-    case 0:
+    const auto remainder_microsecs = elapsed_time % 3us;
+    if (remainder_microsecs == 0us) {
       small_bm_pixel.R += 11;// NOLINT Magic Number
-      break;
-    case 1:
+    } else if (remainder_microsecs == 1us) {
       small_bm_pixel.G += 11;// NOLINT Magic Number
-      break;
-    case 2:
+    } else if (remainder_microsecs == 2us) {
       small_bm_pixel.B += 11;// NOLINT Magic Number
-      break;
     }
-
 
     ++max_row;
     if (max_row >= bm->height()) { max_row = 0; }
@@ -283,9 +276,9 @@ void game_iteration_canvas()
         small_bm | ftxui::border }) });
   };
 
-  auto container = ftxui::Container::Vertical({});
+  const auto container = ftxui::Container::Vertical({});
 
-  auto renderer = ftxui::Renderer(container, make_layout);
+  const auto renderer = ftxui::Renderer(container, make_layout);
 
   std::atomic<bool> refresh_ui_continue = true;
 
@@ -316,12 +309,12 @@ int main(int argc, const char **argv)
           intro loop_based
           intro (-h | --help)
           intro --version
- Options:
+  Options:
           -h --help     Show this screen.
           --version     Show version.
 )";
 
-    std::map<std::string, docopt::value> args = docopt::docopt(USAGE,
+    const std::map<std::string, docopt::value> args = docopt::docopt(USAGE,
       { std::next(argv), std::next(argv, argc) },
       true,// show help if requested
       fmt::format("{} {}",
@@ -329,7 +322,7 @@ int main(int argc, const char **argv)
         cpp_weekly_game_jam::cmake::project_version));// version string, acquired
                                             // from config.hpp via CMake
 
-    if (args["turn_based"].asBool()) {
+    if (args.at("turn_based").asBool()) {
       consequence_game();
     } else {
       game_iteration_canvas();
