@@ -3,7 +3,8 @@
 [requires]
 catch2/2.13.8
 docopt.cpp/0.6.3
-#fmt/8.1.1
+ftxui/2.0.0
+fmt/8.1.1
 spdlog/1.9.2
 
 [generators]
