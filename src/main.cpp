@@ -213,7 +213,7 @@ void game_iteration_canvas()
   const auto bm = std::make_shared<Bitmap>(50, 50);// NOLINT magic numbers
   const auto small_bm = std::make_shared<Bitmap>(6, 6);// NOLINT magic numbers
 
-  auto fps = 0.0;
+  auto fps = 0.0L;
 
   std::size_t max_row = 0;
   std::size_t max_col = 0;
@@ -225,7 +225,7 @@ void game_iteration_canvas()
     
     using namespace std::chrono_literals;
     // this isn't actually timing based for now, it's just updating the display however fast it can
-    fps = 1.0s / std::chrono::duration<double, std::ratio<1, 1>>(elapsed_time); // NOLINT Magic Number
+    fps = 1.0s / std::chrono::duration_cast<std::chrono::duration<long double, std::ratio<1, 1>>>(elapsed_time); // NOLINT Magic Number
 
     for (std::size_t row = 0; row < max_row; ++row) {
       for (std::size_t col = 0; col < bm->width(); ++col) { ++(bm->at(col, row).R); }
